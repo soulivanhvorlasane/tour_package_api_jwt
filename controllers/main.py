@@ -170,6 +170,7 @@ class ApiAuthToken(http.Controller):
         return [{
             'id': p.id,
             'name': p.name,
+            'category': p.category_id.name if p.category_id else None,
             'price': p.price,
             'duration': p.duration,
             'availability_status': p.availability_status,
@@ -243,6 +244,7 @@ class ApiAuthToken(http.Controller):
         return {
             'id': package.id,
             'name': package.name,
+            'category': package.category_id.name if package.category_id else None,
             'description': package.description,
             'price': package.price,
             'duration': package.duration,
