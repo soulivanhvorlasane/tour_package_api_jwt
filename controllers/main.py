@@ -241,6 +241,9 @@ class ApiAuthToken(http.Controller):
             })
 
         base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        
+        gallery = [f"{base_url}/web/image/{img.id}?unique={img.checksum}" for img in package.image_ids] if package.image_ids else []
+
         return {
             'id': package.id,
             'name': package.name,
@@ -250,5 +253,7 @@ class ApiAuthToken(http.Controller):
             'duration': package.duration,
             'availability_status': package.availability_status,
             'cover_image': f"{base_url}/web/image/tour.package/{package.id}/cover_image?unique={int(package.write_date.timestamp()) if package.write_date else 0}" if package.cover_image else f"{base_url}/tour_package/static/images/default_cover.png",
+            'video_url': package.video_url,
+            'gallery': gallery,
             'calendars': calendars
         }
