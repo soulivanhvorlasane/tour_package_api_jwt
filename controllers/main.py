@@ -122,7 +122,7 @@ class ApiAuthToken(http.Controller):
             'name': user.name,
             'email': user.email,
             'phone': user.phone or '',
-            'profile_image': f"{base_url}/web/image/res.users/{user.id}/image_1920" if user.image_1920 else None
+            'profile_image': f"{base_url}/web/image/res.partner/{user.partner_id.id}/image_1920" if user.image_1920 else None
         }
 
     @http.route('/api/user/profile/image', type='json', auth="public", methods=['POST'], csrf=False)
@@ -153,11 +153,21 @@ class ApiAuthToken(http.Controller):
                 image_base64 = image_base64.split(',')[1]
                 
             user.write({'image_1920': image_base64})
+            
+            # Ensure the attachment is publicly accessible so the mobile app can read it
+            attachment = request.env['ir.attachment'].sudo().search([
+                ('res_model', '=', 'res.partner'),
+                ('res_id', '=', user.partner_id.id),
+                ('res_field', '=', 'image_1920')
+            ], limit=1)
+            if attachment:
+                attachment.sudo().write({'public': True})
+                
             base_url = "http://localhost:8069"
             return {
                 'success': True,
                 'message': 'Profile image updated successfully',
-                'profile_image': f"{base_url}/web/image/res.users/{user.id}/image_1920"
+                'profile_image': f"{base_url}/web/image/res.partner/{user.partner_id.id}/image_1920"
             }
         except Exception as e:
             _logger.error("Profile Image Update Error: %s", str(e))
