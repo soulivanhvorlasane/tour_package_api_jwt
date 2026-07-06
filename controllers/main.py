@@ -115,7 +115,7 @@ class ApiAuthToken(http.Controller):
         if not user.exists():
             return {'error': 'User not found'}
             
-        base_url = "http://localhost:8069"
+        base_url = request.httprequest.url_root.rstrip('/')
             
         return {
             'id': user.id,
@@ -163,7 +163,7 @@ class ApiAuthToken(http.Controller):
             if attachment:
                 attachment.sudo().write({'public': True})
                 
-            base_url = "http://localhost:8069"
+            base_url = request.httprequest.url_root.rstrip('/')
             return {
                 'success': True,
                 'message': 'Profile image updated successfully',
