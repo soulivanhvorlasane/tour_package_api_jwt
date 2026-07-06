@@ -57,6 +57,49 @@ class ApiAuthToken(http.Controller):
             return {'token': token}
         return {'error': 'Invalid credentials'}
 
+    @http.route('/api/register', type='json', auth="public", methods=['POST'], csrf=False)
+    def api_register(self, **kwargs):
+        name = kwargs.get('name')
+        email = kwargs.get('email')
+        password = kwargs.get('password')
+        
+        if not name or not email or not password:
+            return {'error': 'Missing required fields: name, email, password'}
+            
+        try:
+            # Check if user already exists
+            existing_user = request.env['res.users'].sudo().search([('login', '=', email)], limit=1)
+            if existing_user:
+                return {'error': 'Email is already registered'}
+                
+            # Create user (give portal access by default)
+            portal_group = request.env.ref('base.group_portal', raise_if_not_found=False)
+            groups_id = [(6, 0, [portal_group.id])] if portal_group else []
+            
+            user = request.env['res.users'].sudo().create({
+                'name': name,
+                'login': email,
+                'password': password,
+                'groups_id': groups_id
+            })
+            
+            # Generate JWT token for auto-login
+            payload = {
+                'user_id': user.id,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+            }
+            token = jwt.encode(payload, get_secret_key(), algorithm='HS256')
+            
+            return {
+                'success': True,
+                'message': 'User registered successfully',
+                'token': token,
+                'user_id': user.id
+            }
+        except Exception as e:
+            _logger.error("Registration Error: %s", str(e))
+            return {'error': 'Registration failed', 'details': str(e)}
+
     @http.route('/api/user/profile', type='json', auth="public", methods=['GET', 'POST'], csrf=False)
     def user_profile(self, **kwargs):
         token_header = request.httprequest.headers.get('Authorization')
