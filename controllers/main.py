@@ -125,6 +125,44 @@ class ApiAuthToken(http.Controller):
             'profile_image': f"{base_url}/web/image/res.users/{user.id}/image_1920" if user.image_1920 else None
         }
 
+    @http.route('/api/user/profile/image', type='json', auth="public", methods=['POST'], csrf=False)
+    def update_profile_image(self, **kwargs):
+        token_header = request.httprequest.headers.get('Authorization')
+        if not token_header or not token_header.startswith('Bearer '):
+            return {'error': 'Missing or invalid token'}
+            
+        token = token_header.split(' ')[1]
+        payload = validate_token(token)
+        if 'error' in payload:
+            return payload
+            
+        user = request.env['res.users'].sudo().browse(payload['user_id'])
+        if not user.exists():
+            return {'error': 'User not found'}
+            
+        image_base64 = kwargs.get('image')
+        if not image_base64:
+            return {'error': 'Missing image data. Expected a base64 string in the "image" key.'}
+            
+        try:
+            # In Odoo, base64 data for binary fields can sometimes contain the "data:image/jpeg;base64," prefix.
+            # Odoo's binary fields usually handle standard base64 strings directly. 
+            # If the frontend sends the prefix, we can optionally strip it, but standard practice 
+            # is to send just the base64 string itself.
+            if ',' in image_base64:
+                image_base64 = image_base64.split(',')[1]
+                
+            user.write({'image_1920': image_base64})
+            base_url = "http://localhost:8069"
+            return {
+                'success': True,
+                'message': 'Profile image updated successfully',
+                'profile_image': f"{base_url}/web/image/res.users/{user.id}/image_1920"
+            }
+        except Exception as e:
+            _logger.error("Profile Image Update Error: %s", str(e))
+            return {'error': 'Failed to update profile image', 'details': str(e)}
+
     @http.route('/api/user/bookings', type='json', auth="public", methods=['GET', 'POST'], csrf=False)
     def user_bookings(self, **kwargs):
         token_header = request.httprequest.headers.get('Authorization')
