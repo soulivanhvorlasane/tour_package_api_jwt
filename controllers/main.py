@@ -116,13 +116,21 @@ class ApiAuthToken(http.Controller):
             return {'error': 'User not found'}
             
         base_url = request.httprequest.url_root.rstrip('/')
+        
+        attachment = request.env['ir.attachment'].sudo().search([
+            ('res_model', '=', 'res.partner'),
+            ('res_id', '=', user.partner_id.id),
+            ('res_field', '=', 'image_1920')
+        ], limit=1)
+        
+        profile_image_url = f"{base_url}/web/image/{attachment.id}" if attachment else None
             
         return {
             'id': user.id,
             'name': user.name,
             'email': user.email,
             'phone': user.phone or '',
-            'profile_image': f"{base_url}/web/image/res.partner/{user.partner_id.id}/image_1920" if user.image_1920 else None
+            'profile_image': profile_image_url
         }
 
     @http.route('/api/user/profile/image', type='json', auth="public", methods=['POST'], csrf=False)
@@ -152,7 +160,8 @@ class ApiAuthToken(http.Controller):
             if ',' in image_base64:
                 image_base64 = image_base64.split(',')[1]
                 
-            user.write({'image_1920': image_base64})
+            # Write directly to partner_id to trigger image.mixin resizing logic properly
+            user.partner_id.sudo().write({'image_1920': image_base64})
             
             # Ensure the attachment is publicly accessible so the mobile app can read it
             attachment = request.env['ir.attachment'].sudo().search([
@@ -160,14 +169,17 @@ class ApiAuthToken(http.Controller):
                 ('res_id', '=', user.partner_id.id),
                 ('res_field', '=', 'image_1920')
             ], limit=1)
+            
+            base_url = request.httprequest.url_root.rstrip('/')
+            profile_image_url = f"{base_url}/web/image/{attachment.id}" if attachment else None
+            
             if attachment:
                 attachment.sudo().write({'public': True})
                 
-            base_url = request.httprequest.url_root.rstrip('/')
             return {
                 'success': True,
                 'message': 'Profile image updated successfully',
-                'profile_image': f"{base_url}/web/image/res.partner/{user.partner_id.id}/image_1920"
+                'profile_image': profile_image_url
             }
         except Exception as e:
             _logger.error("Profile Image Update Error: %s", str(e))
