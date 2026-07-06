@@ -115,11 +115,14 @@ class ApiAuthToken(http.Controller):
         if not user.exists():
             return {'error': 'User not found'}
             
+        base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+            
         return {
             'id': user.id,
             'name': user.name,
             'email': user.email,
-            'phone': user.phone or ''
+            'phone': user.phone or '',
+            'profile_image': f"{base_url}/web/image/res.users/{user.id}/image_1920" if user.image_1920 else None
         }
 
     @http.route('/api/user/bookings', type='json', auth="public", methods=['GET', 'POST'], csrf=False)
