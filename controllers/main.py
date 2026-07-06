@@ -115,7 +115,7 @@ class ApiAuthToken(http.Controller):
         if not user.exists():
             return {'error': 'User not found'}
             
-        base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        base_url = "http://localhost:8069"
             
         return {
             'id': user.id,
