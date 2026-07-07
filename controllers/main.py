@@ -79,6 +79,7 @@ class ApiAuthToken(http.Controller):
             user = request.env['res.users'].sudo().create({
                 'name': name,
                 'login': email,
+                'email': email,
                 'password': password,
                 'groups_id': groups_id,
                 'active': True
@@ -129,7 +130,7 @@ class ApiAuthToken(http.Controller):
         return {
             'id': user.id,
             'name': user.name,
-            'email': user.email,
+            'email': user.email or user.login or '',
             'phone': user.phone or '',
             'profile_image': profile_image_url
         }
