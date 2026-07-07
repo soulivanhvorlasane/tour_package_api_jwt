@@ -80,7 +80,8 @@ class ApiAuthToken(http.Controller):
                 'name': name,
                 'login': email,
                 'password': password,
-                'groups_id': groups_id
+                'groups_id': groups_id,
+                'active': True
             })
             
             # Generate JWT token for auto-login
