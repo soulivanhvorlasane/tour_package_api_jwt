@@ -57,7 +57,7 @@ class ApiAuthToken(http.Controller):
             return {'token': token}
         return {'error': 'Invalid credentials'}
 
-    @http.route('/api/register', type='json', auth="public", methods=['POST'], csrf=False)
+    @http.route('/api/user/register', type='json', auth="public", methods=['POST'], csrf=False)
     def api_register(self, **kwargs):
         name = kwargs.get('name')
         email = kwargs.get('email')
