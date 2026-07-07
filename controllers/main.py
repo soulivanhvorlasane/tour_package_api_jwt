@@ -222,15 +222,33 @@ class ApiAuthToken(http.Controller):
             
         user = request.env['res.users'].sudo().browse(payload['user_id'])
         bookings = request.env['tour.booking'].sudo().search([
-            ('partner_id', '=', user.partner_id.id),
-            ('state', '=', 'confirmed')  # Usually calendar only shows confirmed bookings
+            ('user_id', '=', user.id)
         ])
         
-        return [{
-            'title': b.name,
-            'start': str(b.calendar_id.date_start) if b.calendar_id and b.calendar_id.date_start else None,
-            'end': str(b.calendar_id.date_end) if b.calendar_id and b.calendar_id.date_end else None
-        } for b in bookings if b.calendar_id]
+        events = []
+        for b in bookings:
+            if b.date_start and b.date_end:
+                end_date = b.date_end + datetime.timedelta(days=1)
+                color = '#28a745' if b.payment_status == 'confirmed' else '#ffc107'
+                
+                events.append({
+                    'title': b.package_id.name if b.package_id else b.name,
+                    'start': b.date_start.strftime('%Y-%m-%d'),
+                    'end': end_date.strftime('%Y-%m-%d'),
+                    'url': f'/my/bookings/{b.id}',
+                    'backgroundColor': color,
+                    'borderColor': color,
+                    'textColor': '#fff' if b.payment_status == 'confirmed' else '#000',
+                    'extendedProps': {
+                        'booking_id': b.id,
+                        'package_name': b.package_id.name if b.package_id else '',
+                        'date_range': f"{b.date_start.strftime('%Y-%m-%d')} to {b.date_end.strftime('%Y-%m-%d')}",
+                        'seats': b.seats,
+                        'status': dict(b.fields_get(allfields=['payment_status'])['payment_status']['selection']).get(b.payment_status, b.payment_status)
+                    }
+                })
+                
+        return events
 
     @http.route('/api/refresh', type='json', auth="public", methods=['POST'], csrf=False)
     def refresh_token(self, **kwargs):
