@@ -233,6 +233,7 @@ class ApiAuthToken(http.Controller):
                 
                 events.append({
                     'title': b.package_id.name if b.package_id else b.name,
+                    'package_name': b.package_id.name if b.package_id else '',
                     'start': b.date_start.strftime('%Y-%m-%d'),
                     'end': end_date.strftime('%Y-%m-%d'),
                     'url': f'/my/bookings/{b.id}',
