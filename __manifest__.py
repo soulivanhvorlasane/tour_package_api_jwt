@@ -10,6 +10,9 @@ Provides secure JWT-based authentication and protected API endpoints.
 Integrates with the tour_package module to expose user profile, package bookings, and booking calendar.
     """,
     'depends': ['base', 'web', 'tour_package'],
+    'external_dependencies': {
+        'python': ['PyJWT'],
+    },
     'data': [
         'security/ir.model.access.csv',
     ],
