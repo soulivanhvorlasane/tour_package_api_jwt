@@ -1,10 +1,15 @@
-import jwt
 import datetime
 from odoo import http, tools
 from odoo.http import request
 import logging
 
 _logger = logging.getLogger(__name__)
+
+try:
+    import jwt
+except ImportError:
+    _logger.warning("The PyJWT python module is not installed. Please install it with: pip install PyJWT")
+    jwt = None
 
 def get_secret_key():
     # Retrieve secret key from odoo.conf, fallback to a default if not found
